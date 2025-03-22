@@ -16,17 +16,4 @@ class PersonViewSet(viewsets.ModelViewSet):
 
     queryset = Person.objects.all()
     serializer_class = PersonSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """
-        Permite filtrar las personas activas si es necesario.
-        """
-        queryset = super().get_queryset()
-        is_active = self.request.query_params.get("is_active")
-        import wdb
-
-        wdb.set_trace()
-        if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == "true")
-        return queryset
+    # permission_classes = [IsAuthenticated]

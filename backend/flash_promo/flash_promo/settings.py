@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "flash_promo",
+    "celery",
 ]
 
 INSTALLED_APPS += ["promotions"]

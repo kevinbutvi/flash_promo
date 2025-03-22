@@ -1,3 +1,7 @@
 from celery import shared_task
+import time
 
-# here my async tasks
+
+@shared_task
+def send_user_notification():
+    pass
