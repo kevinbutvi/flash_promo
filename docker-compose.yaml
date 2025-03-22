@@ -34,11 +34,11 @@ services:
         restart: always
         container_name: flash_promo_db
         environment:
-            - PGUSER=postgres
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=django
-            - POSTGRES_LOG_STATEMENT=mod
+            - PGUSER=${PGUSER}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_LOG_STATEMENT=${POSTGRES_LOG_STATEMENT}
         volumes:
             - pgdata:/var/lib/postgresql/data
         ports:
@@ -56,6 +56,29 @@ services:
         image: kozea/wdb
         ports:
             - '1984:1984'
+        networks:
+            - market
+
+    worker:
+        image: flash-promo-backend
+        command:             
+            - bash
+            - -c
+            - |
+                cd flash_promo
+                python ./manage.py run_celery
+        environment: *backend_environment
+        depends_on:
+            - web
+            - redis
+        env_file:
+            - .env
+        volumes: *backend_volumes
+        networks:
+            - market
+
+    redis:
+        image: redis:7.0.11-alpine
         networks:
             - market
 
