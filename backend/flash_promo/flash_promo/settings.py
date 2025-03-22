@@ -31,11 +31,16 @@ INSTALLED_APPS = [
     "cacheops",
     "django_celery_results",
     "django_celery_beat",
-    "flash_promo",
     "celery",
+    "flash_promo",
 ]
 
-INSTALLED_APPS += ["promotions"]
+INSTALLED_APPS += [
+    "promotions",
+    "market",
+    "users",
+    "utils",
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
