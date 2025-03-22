@@ -2,7 +2,6 @@ from utils.models import BaseModel
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-import uuid
 
 
 class UserSegment(BaseModel):
@@ -10,7 +9,7 @@ class UserSegment(BaseModel):
     description = models.TextField(blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class ClientProfile(BaseModel):
@@ -22,4 +21,6 @@ class ClientProfile(BaseModel):
 
     def can_receive_notification_today(self):
         today = timezone.now().date()
-        return self.last_notification_date.date != today
+        return (
+            self.last_notification_date and self.last_notification_date.date() != today
+        )
