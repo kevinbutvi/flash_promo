@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "backend"
+version = "0.1.0"
+description = ""
+authors = ["kevin"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "~5.1.1"
+django-rest-framework = "^0.1.0"
+django-celery-results = "^2.5.1"
+celery = {extras = ["redis"], version = "^5.4.0"}
+django-celery-beat = "^2.6.0"
+django-import-export-celery = "^1.7.1"
+django-redis = "^5.4.0"
+pypdf2 = "^3.0.1"
+psycopg = {extras = ["binary"], version = "^3.2.1"}
+django-model-utils = "^4.5.1"
+djangoql = "^0.18.1"
+pyftpdlib = "^2.0.0"
+django-admin-interface = "^0.29.1"
+django-cacheops = "^7.1"
+django-extensions = "^3.2.3"
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.21.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+line-length = 160
+select = ["I", "F"]
+ignore = ["E4", "E7", "E9"]
