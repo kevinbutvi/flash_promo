@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+    web:
+        build: .
+        image: backend
+        command: >
+            bash -c "python manage.py migrate && python manage.py runserver 0:8000"
+        depends_on:
+            - postgresql
+        env_file:
+            - .env
+        volumes: &backend_volumes
+            - .:/app
+        ports:
+            - 8000:8000
+        networks:
+            - flash_promo
+
+    postgresql:
+        image: postgres:15.1-alpine
+        restart: always
+        container_name: market_db
+        env_file:
+            - .env
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        ports:
+            - '5432:5432'
+        networks:
+            - flash_promo
+
+    wdb:
+        image: kozea/wdb
+        ports:
+            - '1984:1984'
+        networks:
+            - flash_promo
+
+networks:
+    flash_promo:
+
+volumes:
+    pgdata: {}
