@@ -1,0 +1,66 @@
+version: '3.7'
+
+services:
+    web:
+        build:
+            context: .
+            dockerfile: ./deployment/images/backend.Dockerfile
+        image: flash-promo-backend
+        command:
+            - bash
+            - -c
+            - |
+                python ./flash_promo/manage.py migrate
+                python ./flash_promo/manage.py runserver 0:8000
+        stdin_open: true
+        tty: true
+        environment: &backend_environment
+            - DJANGO_DEBUG
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        env_file:
+            - .env
+        volumes: &backend_volumes
+            - ./backend:/app:cached
+        ports:
+            - 8000:8000
+        networks:
+            - market
+
+    postgresql:
+        image: postgres:15.1-alpine
+        shm_size: 512m
+        restart: always
+        container_name: flash_promo_db
+        environment:
+            - PGUSER=postgres
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_DB=django
+            - POSTGRES_LOG_STATEMENT=mod
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+        ports:
+            - '5432:5432'
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready', '-d', 'django', '-U', 'postgres']
+            interval: 5s
+            timeout: 30s
+            retries: 10
+            start_period: 10s
+        networks:
+            - market
+
+    wdb:
+        image: kozea/wdb
+        ports:
+            - '1984:1984'
+        networks:
+            - market
+
+networks:
+    market:
+
+volumes:
+    pgdata: {}
