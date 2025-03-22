@@ -24,6 +24,9 @@ class PersonViewSet(viewsets.ModelViewSet):
         """
         queryset = super().get_queryset()
         is_active = self.request.query_params.get("is_active")
+        import wdb
+
+        wdb.set_trace()
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
         return queryset

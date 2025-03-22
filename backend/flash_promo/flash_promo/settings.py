@@ -28,6 +28,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django_extensions",
     "rest_framework",
+    "cacheops",
+    "django_celery_results",
+    "django_celery_beat",
+    "flash_promo",
 ]
 
 INSTALLED_APPS += ["promotions"]
@@ -126,3 +130,33 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Celery settings
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_CACHE_BACKEND = "django-cache"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+# Django Cache Settings
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+# Cacheops Settings
+CACHEOPS_REDIS = {
+    "host": "redis",
+    "port": 6379,
+    "db": 1,
+}
+
+CACHEOPS = {
+    "promotions.*": {"ops": "all", "timeout": 60 * 15},
+}

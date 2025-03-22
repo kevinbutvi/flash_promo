@@ -59,6 +59,29 @@ services:
         networks:
             - market
 
+    worker:
+        image: flash-promo-backend
+        command:             
+            - bash
+            - -c
+            - |
+                cd flash_promo
+                python ./manage.py run_celery
+        environment: *backend_environment
+        depends_on:
+            - web
+            - redis
+        env_file:
+            - .env
+        volumes: *backend_volumes
+        networks:
+            - market
+
+    redis:
+        image: redis:7.0.11-alpine
+        networks:
+            - market
+
 networks:
     market:
 
