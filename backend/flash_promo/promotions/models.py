@@ -25,6 +25,11 @@ class FlashPromo(BaseModel):
         now = timezone.now()
         return self.start_time <= now <= self.end_time and self.is_active
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["start_time", "end_time", "is_active"]),
+        ]
+
 
 class PromoReservation(BaseModel):
     promo = models.ForeignKey(

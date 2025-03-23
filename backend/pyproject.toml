@@ -23,6 +23,7 @@ django-admin-interface = "^0.29.1"
 django-cacheops = "^7.1"
 django-extensions = "^3.2.3"
 wdb = "^3.3.0"
+haversine = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.21.0"
