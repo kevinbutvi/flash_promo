@@ -12,6 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ADMIN_USERNAME = os.getenv("DJANGO_ADMIN_USERNAME", "admin")
 ADMIN_EMAIL = os.getenv("DJANGO_ADMIN_USERNAME", "admin@admin.com")
 ADMIN_PASSWORD = os.getenv("DJANGO_ADMIN_USERNAME", "admin123")
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET")
@@ -143,7 +146,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Celery settings
-CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_BROKER_URL = f"{REDIS_HOST}://{REDIS_HOST}:{REDIS_PORT}"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "django-cache"
 CELERY_ACCEPT_CONTENT = ["application/json"]
@@ -154,7 +157,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/0",
+        "LOCATION": f"{REDIS_HOST}://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -163,8 +166,8 @@ CACHES = {
 
 # Cacheops Settings
 CACHEOPS_REDIS = {
-    "host": "redis",
-    "port": 6379,
+    "host": REDIS_HOST,
+    "port": REDIS_PORT,
     "db": 1,
 }
 
