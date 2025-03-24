@@ -15,7 +15,7 @@ class FlashPromo(BaseModel):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     segments = models.ManyToManyField(UserSegment, related_name="targeted_promos")
-    max_distance_km = models.DecimalField(max_digits=2, decimal_places=2, default=2.0)
+    max_distance_km = models.DecimalField(max_digits=4, decimal_places=2, default=2.0)
     is_active = models.BooleanField(default=False)
 
     def __str__(self):
