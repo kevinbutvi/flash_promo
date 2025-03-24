@@ -18,9 +18,3 @@ class ClientProfile(BaseModel):
     latitude = models.FloatField()
     longitude = models.FloatField()
     last_notification_date = models.DateTimeField(null=True, blank=True)
-
-    def can_receive_notification_today(self):
-        today = timezone.now().date()
-        return (
-            self.last_notification_date and self.last_notification_date.date() != today
-        )
