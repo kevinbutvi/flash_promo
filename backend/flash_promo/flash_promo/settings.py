@@ -173,4 +173,10 @@ CACHEOPS_REDIS = {
 
 CACHEOPS = {
     "promotions.*": {"ops": "all", "timeout": 60 * 15},
+    "market.*": {"ops": "all", "timeout": 60 * 15},
+    "users.*": {"ops": "all", "timeout": 60 * 15},
+    "users.ClientProfile": {"ops": "all", "timeout": 60 * 60 * 12},
 }
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
+CACHEOPS_LOGGING = True

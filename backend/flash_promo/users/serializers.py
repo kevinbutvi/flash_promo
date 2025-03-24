@@ -16,8 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ClientProfileSerializer(serializers.ModelSerializer):
-    segments = UserSegmentSerializer(many=True, read_only=True)
-    user = UserSerializer(read_only=True)
+    segments = UserSegmentSerializer()
+    user = UserSerializer()
 
     class Meta:
         model = ClientProfile
@@ -29,4 +29,4 @@ class ClientProfileSerializer(serializers.ModelSerializer):
             "longitude",
             "last_notification_date",
         ]
-        read_only_fields = ["user", "last_notification_date"]
+        read_only_fields = ["last_notification_date"]
