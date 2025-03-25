@@ -50,6 +50,16 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
         promo = serializer.save()
         self._schedule_promo_notifications(promo)
 
+    def _get_running_promos(self, now=None):
+        now = now or timezone.localtime()
+        return (
+            FlashPromo.objects.filter(
+                start_time__lte=now, end_time__gte=now, is_active=True
+            )
+            .select_related("product", "product__store")
+            .prefetch_related("segments")
+        )
+
     @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
     def execute_promotion(self, request):
         """Execut listed promotions if are availables"""
@@ -76,22 +86,17 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    def _get_running_promos(self, now=None):
-        now = now or timezone.localtime()
-        return (
-            FlashPromo.objects.filter(
-                start_time__lte=now, end_time__gte=now, is_active=True
-            )
-            .select_related("product", "product__store")
-            .prefetch_related("segments")
-        )
-
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def running(self, request):
         """Returns running promotions"""
         active_promos = self._get_running_promos()
-        serializer = FlashPromoSerializer(active_promos, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(active_promos)
+        if page is not None:
+            return self.get_paginated_response(
+                FlashPromoSerializer(page, many=True).data
+            )
+        return Response(FlashPromoSerializer(active_promos, many=True).data)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def eligible(self, request):
@@ -117,8 +122,13 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
 
         eligible_promos = filter_promos_by_distance(active_promos, user_profile)
 
-        serializer = FlashPromoSerializer(eligible_promos, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(eligible_promos)
+        if page is not None:
+            return self.get_paginated_response(
+                FlashPromoSerializer(page, many=True).data
+            )
+
+        return Response(FlashPromoSerializer(eligible_promos, many=True).data)
 
 
 class PromoReservationViewSet(
