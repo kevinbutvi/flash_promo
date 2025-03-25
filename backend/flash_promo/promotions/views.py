@@ -8,7 +8,6 @@ from promotions.models import FlashPromo, PromoReservation
 from promotions.serializers import (
     FlashPromoSerializer,
     PromoReservationSerializer,
-    ExecutePromotionSerializer,
 )
 from django.db import transaction
 from django_celery_beat.models import PeriodicTask, ClockedSchedule
@@ -59,32 +58,6 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
             )
             .select_related("product", "product__store")
             .prefetch_related("segments")
-        )
-
-    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
-    def execute_promotion(self, request):
-        """Execut listed promotions if are availables"""
-        serializer = ExecutePromotionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        promos = serializer.validated_data["promo_ids"]
-        results = []
-
-        for promo in promos:
-            try:
-                send_promo_notifications.delay(promo.id)
-                results.append({"promo_id": promo.id, "status": "success"})
-            except Exception as e:
-                results.append(
-                    {"promo_id": promo.id, "status": "error", "message": str(e)}
-                )
-
-        return Response(
-            {
-                "message": f"Promotions executed (Total={len(promos)}).",
-                "results": results,
-            },
-            status=status.HTTP_200_OK,
         )
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
@@ -156,12 +129,12 @@ class PromoReservationViewSet(
     def _check_existing_reservations(self, reservation_key, active_reservation_key):
         if redis_client.exists(reservation_key):
             raise serializers.ValidationError(
-                "You allready have an active reservation for this product"
+                "You allready have an active reservation for this promotion"
             )
 
         if redis_client.keys(active_reservation_key):
             raise serializers.ValidationError(
-                "This product was reserved for another user"
+                "This promotion was reserved for another user"
             )
 
     def perform_create(self, serializer):

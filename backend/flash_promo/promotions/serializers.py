@@ -85,26 +85,3 @@ class PromoNotificationSerializer(serializers.ModelSerializer):
         model = PromoNotification
         fields = ["id", "promo", "user", "sent_at"]
         read_only_fields = ["sent_at"]
-
-
-class ExecutePromotionSerializer(serializers.Serializer):
-    promo_ids = serializers.PrimaryKeyRelatedField(
-        queryset=FlashPromo.objects.all(),
-        many=True,
-        help_text="ID list of promotions to execute.",
-    )
-
-    def validate_promo_ids(self, value):
-        now = timezone.localtime()
-        invalid_promos = []
-
-        for promo in value:
-            if promo.end_time <= now or not promo.is_active:
-                invalid_promos.append(promo.id)
-
-        if invalid_promos:
-            raise serializers.ValidationError(
-                f"The following promotions are not valid because are deactivated or have already occurred: {invalid_promos}"
-            )
-
-        return value
