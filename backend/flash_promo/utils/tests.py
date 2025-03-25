@@ -125,7 +125,7 @@ class ClientProfileModelTests(TestCase):
             user=self.user2,
             latitude=99.0,
             longitude=25.0,
-            last_notification_date=timezone.now() - timedelta(days=2),
+            last_notification_date=timezone.localtime() - timedelta(days=2),
         )
         self.profile2.segments.add(self.segment1)
 

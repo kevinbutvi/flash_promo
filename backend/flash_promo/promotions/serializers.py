@@ -41,8 +41,6 @@ class FlashPromoSerializer(serializers.ModelSerializer):
         start_time = data.get("start_time")
         end_time = data.get("end_time")
 
-        if start_time and start_time.date() < timezone.now().date():
-            raise serializers.ValidationError("Start time must be greater than now")
         if end_time and end_time <= start_time:
             raise serializers.ValidationError(
                 "End time must be greater than start time"
@@ -87,26 +85,3 @@ class PromoNotificationSerializer(serializers.ModelSerializer):
         model = PromoNotification
         fields = ["id", "promo", "user", "sent_at"]
         read_only_fields = ["sent_at"]
-
-
-class ExecutePromotionSerializer(serializers.Serializer):
-    promo_ids = serializers.PrimaryKeyRelatedField(
-        queryset=FlashPromo.objects.all(),
-        many=True,
-        help_text="ID list of promotions to execute.",
-    )
-
-    def validate_promo_ids(self, value):
-        now = timezone.now()
-        invalid_promos = []
-
-        for promo in value:
-            if promo.end_time <= now or not promo.is_active:
-                invalid_promos.append(promo.id)
-
-        if invalid_promos:
-            raise serializers.ValidationError(
-                f"The following promotions are not valid because are deactivated or have already occurred: {invalid_promos}"
-            )
-
-        return value

@@ -8,8 +8,8 @@ from promotions.models import FlashPromo, PromoReservation
 from promotions.serializers import (
     FlashPromoSerializer,
     PromoReservationSerializer,
-    ExecutePromotionSerializer,
 )
+from django.db import transaction
 from django_celery_beat.models import PeriodicTask, ClockedSchedule
 import json
 from users.models import ClientProfile
@@ -24,10 +24,9 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
 
     def _schedule_promo_notifications(self, promo):
         try:
-            now = timezone.now()
+            now = timezone.localtime()
             if not promo.is_active:
                 return
-
             if promo.start_time.date() == now.date() and promo.start_time <= now:
                 send_promo_notifications.delay(promo.id)
                 return
@@ -51,34 +50,8 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
         promo = serializer.save()
         self._schedule_promo_notifications(promo)
 
-    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
-    def execute_promotion(self, request):
-        """Execut listed promotions if are availables"""
-        serializer = ExecutePromotionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        promos = serializer.validated_data["promo_ids"]
-        results = []
-
-        for promo in promos:
-            try:
-                send_promo_notifications.delay(promo.id)
-                results.append({"promo_id": promo.id, "status": "success"})
-            except Exception as e:
-                results.append(
-                    {"promo_id": promo.id, "status": "error", "message": str(e)}
-                )
-
-        return Response(
-            {
-                "message": f"Promotions executed (Total={len(promos)}).",
-                "results": results,
-            },
-            status=status.HTTP_200_OK,
-        )
-
     def _get_running_promos(self, now=None):
-        now = now or timezone.now()
+        now = now or timezone.localtime()
         return (
             FlashPromo.objects.filter(
                 start_time__lte=now, end_time__gte=now, is_active=True
@@ -91,8 +64,13 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
     def running(self, request):
         """Returns running promotions"""
         active_promos = self._get_running_promos()
-        serializer = FlashPromoSerializer(active_promos, many=True)
-        return Response(serializer.data)
+
+        page = self.paginate_queryset(active_promos)
+        if page is not None:
+            return self.get_paginated_response(
+                FlashPromoSerializer(page, many=True).data
+            )
+        return Response(FlashPromoSerializer(active_promos, many=True).data)
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def eligible(self, request):
@@ -104,7 +82,7 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
         except ClientProfile.DoesNotExist:
             return Response([])
 
-        now = timezone.now()
+        now = timezone.localtime()
         active_promos = (
             FlashPromo.objects.filter(
                 start_time__lte=now,
@@ -118,8 +96,13 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
 
         eligible_promos = filter_promos_by_distance(active_promos, user_profile)
 
-        serializer = FlashPromoSerializer(eligible_promos, many=True)
-        return Response(serializer.data)
+        page = self.paginate_queryset(eligible_promos)
+        if page is not None:
+            return self.get_paginated_response(
+                FlashPromoSerializer(page, many=True).data
+            )
+
+        return Response(FlashPromoSerializer(eligible_promos, many=True).data)
 
 
 class PromoReservationViewSet(
@@ -136,7 +119,7 @@ class PromoReservationViewSet(
         return PromoReservation.objects.filter(user=self.request.user)
 
     def _validate_promo_active(self, promo):
-        now = timezone.now()
+        now = timezone.localtime()
         if not (promo.is_active and promo.start_time <= now <= promo.end_time):
             raise serializers.ValidationError(
                 "This promotion is not active at the moment"
@@ -146,12 +129,12 @@ class PromoReservationViewSet(
     def _check_existing_reservations(self, reservation_key, active_reservation_key):
         if redis_client.exists(reservation_key):
             raise serializers.ValidationError(
-                "You allready have an active reservation for this product"
+                "You allready have an active reservation for this promotion"
             )
 
         if redis_client.keys(active_reservation_key):
             raise serializers.ValidationError(
-                "This product was reserved for another user"
+                "This promotion was reserved for another user"
             )
 
     def perform_create(self, serializer):
@@ -189,6 +172,16 @@ class PromoReservationViewSet(
         """Complete a reservation (finish purchase)"""
         try:
             reservation = self.get_object()
+            if reservation.user != request.user:
+                return Response(
+                    {"error": "This reservation belongs to another user"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if reservation.completed:
+                return Response(
+                    {"error": "The reservation was successfully completed"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             reservation_key = f"reservation:{reservation.promo.id}:{request.user.id}"
             if not redis_client.exists(reservation_key):
                 return Response(
@@ -196,14 +189,11 @@ class PromoReservationViewSet(
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            if reservation.user != request.user:
-                return Response(
-                    {"error": "This reservation belongs to another user"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
-            reservation.completed = True
-            reservation.save()
+            with transaction.atomic():
+                reservation.completed = True
+                reservation.save()
+                reservation.promo.is_active = False
+                reservation.promo.save()
 
             redis_client.delete(reservation_key)
 
