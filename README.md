@@ -25,7 +25,8 @@ Una vez notificados los mismos pueden hacer una reserva de dicha promocion, al h
 Si dentro del rango de tiempo de reserva, el usuario completa la misma, la promocion se desactiva para todos lo usuarios.
 
 ## Servicios
-La propuesta cuenta con un listado de endpoints con las siguientes finalidades
+La propuesta cuenta con un listado de endpoints con las siguientes finalidades  
+- Django admin estara disponible en http://localhost:8000/admin y se podra logear con las credenciales declaradas en el .env
 
 ### Stores CRUD
 Permite realizar CRUD de tiendas  
