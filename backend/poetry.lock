@@ -551,6 +551,18 @@ files = [
 ]
 
 [[package]]
+name = "haversine"
+version = "2.9.0"
+description = "Calculate the distance between 2 points on Earth."
+optional = false
+python-versions = ">=3.5"
+groups = ["main"]
+files = [
+    {file = "haversine-2.9.0-py2.py3-none-any.whl", hash = "sha256:d32031b6b4232e37764730a781a3b8cb248710f92aca6f553b8097524420754d"},
+    {file = "haversine-2.9.0.tar.gz", hash = "sha256:1103d7e1f0f108c25b31b63452c54d9d6f29389a70de7dd75fd4b908329b6fcf"},
+]
+
+[[package]]
 name = "html2text"
 version = "2024.2.26"
 description = "Turn HTML into equivalent Markdown-structured text."
@@ -1397,4 +1409,4 @@ dev = ["pre-commit", "pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "740042fedc87f4e8704ca83cf012d2451173d6a64b1ec251abf5c0f72d0c79eb"
+content-hash = "3755251aa9b170cc03198e05e20f8f250ac2a01b7d5f1b609c61957c985ab923"

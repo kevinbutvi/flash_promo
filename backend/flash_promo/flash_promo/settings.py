@@ -8,6 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
+# ENVS
+ADMIN_USERNAME = os.getenv("DJANGO_ADMIN_USERNAME", "admin")
+ADMIN_EMAIL = os.getenv("DJANGO_ADMIN_USERNAME", "admin@admin.com")
+ADMIN_PASSWORD = os.getenv("DJANGO_ADMIN_USERNAME", "admin123")
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+REDIS_PORT = os.getenv("REDIS_PORT", 6379)
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 
@@ -124,7 +132,7 @@ TIME_ZONE = "America/Argentina/Buenos_Aires"
 
 USE_I18N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -138,7 +146,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Celery settings
-CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_BROKER_URL = f"{REDIS_HOST}://{REDIS_HOST}:{REDIS_PORT}"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "django-cache"
 CELERY_ACCEPT_CONTENT = ["application/json"]
@@ -149,7 +157,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/0",
+        "LOCATION": f"{REDIS_HOST}://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
@@ -158,11 +166,17 @@ CACHES = {
 
 # Cacheops Settings
 CACHEOPS_REDIS = {
-    "host": "redis",
-    "port": 6379,
+    "host": REDIS_HOST,
+    "port": REDIS_PORT,
     "db": 1,
 }
 
 CACHEOPS = {
     "promotions.*": {"ops": "all", "timeout": 60 * 15},
+    "market.*": {"ops": "all", "timeout": 60 * 15},
+    "users.*": {"ops": "all", "timeout": 60 * 15},
+    "users.ClientProfile": {"ops": "all", "timeout": 60 * 60 * 12},
 }
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
+CACHEOPS_LOGGING = True

@@ -10,6 +10,6 @@ class StoreAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("name", "store", "regular_prince")
+    list_display = ("name", "store", "regular_price")
     search_fields = ("name", "store__name")
     list_filter = ("store",)
