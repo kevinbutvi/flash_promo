@@ -10,6 +10,7 @@ from promotions.serializers import (
     PromoReservationSerializer,
     ExecutePromotionSerializer,
 )
+from django.db import transaction
 from django_celery_beat.models import PeriodicTask, ClockedSchedule
 import json
 from users.models import ClientProfile
@@ -215,8 +216,11 @@ class PromoReservationViewSet(
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            reservation.completed = True
-            reservation.save()
+            with transaction.atomic():
+                reservation.completed = True
+                reservation.save()
+                reservation.promo.is_active = False
+                reservation.promo.save()
 
             redis_client.delete(reservation_key)
 
