@@ -10,7 +10,7 @@ class StoreViewSetTests(APITestCase):
             username="admin", password="admin123"
         )
         self.client = APIClient()
-        self.client.login(username="admin", password="admin123")  # Authenticate client
+        self.client.login(username="admin", password="admin123")
         self.store = Store.objects.create(
             name="Test Store", latitude=10.0, longitude=20.0
         )

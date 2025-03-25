@@ -11,13 +11,9 @@ from django.test import TestCase
 from django.utils import timezone
 from unittest.mock import MagicMock
 from users.models import ClientProfile, UserSegment
-from promotions.models import FlashPromo
 
-from django.test import TestCase
 from django.contrib.auth.models import User
-from django.utils import timezone
 from unittest.mock import Mock
-from datetime import timedelta
 
 
 class TestFilterPromosByDistance(TestCase):
@@ -153,7 +149,7 @@ class ClientProfileModelTests(TestCase):
         self.assertIn(self.profile1, eligible_users)
         self.assertIn(self.profile2, eligible_users)
 
-        # Assert user3 is not eligible, annoter segment
+        # Assert user3 is not eligible, another segment
         self.assertNotIn(self.profile3, eligible_users)
 
         # Assert distinct users are returned
