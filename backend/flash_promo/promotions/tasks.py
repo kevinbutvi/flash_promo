@@ -36,7 +36,7 @@ def send_promo_notifications(promo_id):
             notifications_to_create.append(
                 PromoNotification(promo=promo, user=user_profile.user)
             )
-            user_profile.last_notification_date = timezone.now()
+            user_profile.last_notification_date = timezone.localtime()
             users_to_update.append(user_profile)
             notificate_user(user_profile.user, promo)
 

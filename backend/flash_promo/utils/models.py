@@ -11,6 +11,6 @@ class BaseModel(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.created_at = timezone.now()
-        self.updated_at = timezone.now()
+            self.created_at = timezone.localtime()
+        self.updated_at = timezone.localtime()
         super().save(*args, **kwargs)

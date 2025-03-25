@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_eligible_users_for_promo(promo):
-    today = timezone.now().date()
+    today = timezone.localtime().date()
     segment_ids = promo.segments.values_list("id", flat=True)
 
     eligible_users = (

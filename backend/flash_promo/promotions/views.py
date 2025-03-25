@@ -24,10 +24,9 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
 
     def _schedule_promo_notifications(self, promo):
         try:
-            now = timezone.now()
+            now = timezone.localtime()
             if not promo.is_active:
                 return
-
             if promo.start_time.date() == now.date() and promo.start_time <= now:
                 send_promo_notifications.delay(promo.id)
                 return
@@ -78,7 +77,7 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
         )
 
     def _get_running_promos(self, now=None):
-        now = now or timezone.now()
+        now = now or timezone.localtime()
         return (
             FlashPromo.objects.filter(
                 start_time__lte=now, end_time__gte=now, is_active=True
@@ -104,7 +103,7 @@ class FlashPromoViewSet(viewsets.ModelViewSet):
         except ClientProfile.DoesNotExist:
             return Response([])
 
-        now = timezone.now()
+        now = timezone.localtime()
         active_promos = (
             FlashPromo.objects.filter(
                 start_time__lte=now,
@@ -136,7 +135,7 @@ class PromoReservationViewSet(
         return PromoReservation.objects.filter(user=self.request.user)
 
     def _validate_promo_active(self, promo):
-        now = timezone.now()
+        now = timezone.localtime()
         if not (promo.is_active and promo.start_time <= now <= promo.end_time):
             raise serializers.ValidationError(
                 "This promotion is not active at the moment"
@@ -189,17 +188,21 @@ class PromoReservationViewSet(
         """Complete a reservation (finish purchase)"""
         try:
             reservation = self.get_object()
+            if reservation.user != request.user:
+                return Response(
+                    {"error": "This reservation belongs to another user"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if reservation.completed:
+                return Response(
+                    {"error": "The reservation was successfully completed"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             reservation_key = f"reservation:{reservation.promo.id}:{request.user.id}"
             if not redis_client.exists(reservation_key):
                 return Response(
                     {"error": "The reservation has expired"},
                     status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            if reservation.user != request.user:
-                return Response(
-                    {"error": "This reservation belongs to another user"},
-                    status=status.HTTP_403_FORBIDDEN,
                 )
 
             reservation.completed = True

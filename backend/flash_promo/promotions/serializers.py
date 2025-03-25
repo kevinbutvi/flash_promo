@@ -41,8 +41,6 @@ class FlashPromoSerializer(serializers.ModelSerializer):
         start_time = data.get("start_time")
         end_time = data.get("end_time")
 
-        if start_time and start_time.date() < timezone.now().date():
-            raise serializers.ValidationError("Start time must be greater than now")
         if end_time and end_time <= start_time:
             raise serializers.ValidationError(
                 "End time must be greater than start time"
@@ -97,7 +95,7 @@ class ExecutePromotionSerializer(serializers.Serializer):
     )
 
     def validate_promo_ids(self, value):
-        now = timezone.now()
+        now = timezone.localtime()
         invalid_promos = []
 
         for promo in value:
