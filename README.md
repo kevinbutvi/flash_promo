@@ -79,4 +79,5 @@ docker compose exec web python ./flash_promo/manage.py test NOMBRE_DE_LA_APP
 - Administraciones de permisos y privilegios de usuarios
 - Optimizacion de Endpoints para retornar solo informacion necesaria
 - Refactorizar codigo para tener metodos y funciones mas atomicas (principios SOLID)
+- Mejorar la tarea de "send_promo_notifications" que quedo con dependencias y con tareas que se podrian desacoplar para mejor funcionamiento y velocidad
 - Mejoras y expansion de tests
