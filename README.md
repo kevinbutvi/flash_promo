@@ -8,7 +8,7 @@ La propuesta consta de 4 servicios principales corriendo en Docker con DockerCom
 - wdb (utilizado para debugging)  
 Dada la falta de tiempo se opto por priorizar la entrega de una solucion en cuanto a funcionalidad e integracion de servicios, dejando de lado calidad de codigo, relaciones de bases de datos, etc para que sean mejoraros en futuras versiones
 
-# Justificacion de deciciones de arquitectura
+# Justificacion de decisiones de arquitectura
 La arquitectura es una integración bastante básica de DjangoREST, Postgres, Celery y Redis.
 Los modelos creados y los endpoints son solo lo escencial para poder probar y mostrar una solución que cumpla con los requisitos y demostrar la capacidad de desarrollar e implementar una solución desde cero, que contemple varios aspectos a nivel arquitectura y creación de la app, aunque sacrificando calidad de código, validaciones, etc etc.por la falta de tiempo.
 
