@@ -1,109 +1,107 @@
 # Flash Promos
-El siguiente codigo busca ser una especie de POC para dar solucion al problema planteado.
-La propuesta consta de 4 servicios principales corriendo en Docker con DockerCompose  
-- web (Backend Python + Django REST)
-- worker (Celery para manejo de tareas asincronas)
-- redis (Redis, para manejo de cache)
-- postgresql (Base de datos)
-- wdb (utilizado para debugging)  
-Dada la falta de tiempo se opto por priorizar la entrega de una solucion en cuanto a funcionalidad e integracion de servicios, dejando de lado calidad de codigo, relaciones de bases de datos, etc para que sean mejoraros en futuras versiones
+The following code aims to be a kind of POC to provide a solution to the stated problem.  
+The proposal consists of 4 main services running in Docker with DockerCompose:  
+- web (Backend Python + Django REST)  
+- worker (Celery for asynchronous task handling)  
+- redis (Redis, for cache management)  
+- postgresql (Database)  
+- wdb (used for debugging)  
+Due to time constraints, the focus was on delivering a functional solution with service integration, leaving aside code quality, database relationships, etc., to be improved in future versions.
 
-# Justificacion de decisiones de arquitectura
-La arquitectura es una integración bastante básica de DjangoREST, Postgres, Celery y Redis.
-Los modelos creados y los endpoints son solo lo escencial para poder probar y mostrar una solución que cumpla con los requisitos y demostrar la capacidad de desarrollar e implementar una solución desde cero, que contemple varios aspectos a nivel arquitectura y creación de la app, aunque sacrificando calidad de código, validaciones, etc etc.por la falta de tiempo.
+# Justification of Architectural Decisions
+The architecture is a fairly basic integration of DjangoREST, Postgres, Celery, and Redis.  
+The models created and the endpoints are just the essentials to test and demonstrate a solution that meets the requirements and showcases the ability to develop and implement a solution from scratch, covering various aspects at the architecture and app creation level, albeit sacrificing code quality, validations, etc., due to time constraints.
 
-Las promociones se manejan de la siguiente manera. Hay un endpoint disponible para hacer CRUD de las mismas. Se permiten crear promociones dentro del mismo día y a futuro.
-Si el backend recibe una promoción con fecha de inicio del corriente día pero en horario pasado se crea en ese momento una tarea en Celery para disparar los avisos de las mismas. En cambio si una promoción tiene fecha futura, se genera la creación de la tarea para que se ejecute al comienzo de la misma. Se pueden crear promociones como inactivas, las cuales no se ejecutarán.
-La “notificación” es simbólica, sólo llama a una función que genera un log, posteriormente a esto vendría alguna integración de tipo websocket o similar para manejar la notificación inmediata de los usuarios, pero se pensó de esta forma para que sea asíncrona y no bloquee el hilo de ejecución.
-La segmentación de usuarios se manejó mediante relacionar las segmentaciones con los usuarios y las mismas con las promociones (una promoción tiene relación con una tienda). De esta forma se filtran los usuarios que por segmento puedan acceder a dicha promoción y posteriormente acorde a la distancia que la promoción tiene establecida.
+Promotions are handled as follows: There is an endpoint available to perform CRUD operations on them. Promotions can be created for the same day or in the future.  
+If the backend receives a promotion with a start date of the current day but a past time, a task is created in Celery at that moment to trigger the notifications. On the other hand, if a promotion has a future date, a task is scheduled to execute at the start of the promotion. Promotions can also be created as inactive, which will not be executed.  
+The "notification" is symbolic; it only calls a function that generates a log. Subsequently, some integration like WebSocket or similar would handle immediate user notifications, but it was designed this way to be asynchronous and not block the execution thread.  
+User segmentation was handled by relating segments to users and segments to promotions (a promotion is related to a store). This way, users who meet the segment criteria can access the promotion, and then, based on the distance set by the promotion, they are filtered further.
 
-En cuanto al manejo del spam, los clientes en su modelo tienen un campo donde se guarda la fecha y hora de la última notificación que se les envió y a la hora de enviar notificaciones, se filtra por dicho valor para no enviar una nueva.
+Regarding spam management, clients in their model have a field where the date and time of the last notification sent to them is stored. When sending notifications, this value is filtered to avoid sending a new one.
 
-En cuanto a optimizaciones implementadas para el manejo de lo anteriormente mencionado, se utilizó Redis como caché para los modelos. Se cachean todos los modelos con la librería “cacheops” de forma automática y se implementó cache custom para el manejo de las reservas de promociones. 
-Se guarda con una clave generada por combinación de valores las reservas con tiempo de caducidad de 1 minuto y se consultan directamente en caché sin necesidad de hacer consultas a la DB, aunque si se guardan las reservas en la postgres a modo de auditoría.
-En cuanto al modelo de arquitectura y los servicios se opto por esta propuesta teniendo en cuenta los siguientes puntos:
-Aislamiento y gestión eficiente: Cada servicio corre en un contenedor independiente, evitando conflictos y facilitando despliegues.
-Escalabilidad: Se pueden aumentar instancias de Django, Redis o Celery según la carga sin afectar otros servicios.
-Optimización de rendimiento: Redis reduce consultas a la base de datos, mejorando tiempos de respuesta.
-Procesamiento asincrónico: Celery maneja tareas en segundo plano, evitando bloqueos en el backend.
-Facilidad de despliegue y mantenimiento: Docker Compose simplifica la configuración, permite replicar entornos rápidamente y evitar conflictos de compatibilidades.
-Alta disponibilidad: Puede integrarse con orquestadores como Kubernetes para mejorar redundancia y tolerancia a fallos.
+Regarding optimizations implemented for the above, Redis was used as a cache for the models. All models are cached automatically using the "cacheops" library, and custom caching was implemented for managing promotion reservations.  
+Reservations are stored with a key generated by combining values, with an expiration time of 1 minute, and are queried directly from the cache without needing to query the DB. However, reservations are still stored in Postgres for auditing purposes.  
+Regarding the architecture model and services, this proposal was chosen considering the following points:  
+- **Isolation and efficient management:** Each service runs in an independent container, avoiding conflicts and facilitating deployments.  
+- **Scalability:** Instances of Django, Redis, or Celery can be increased according to the load without affecting other services.  
+- **Performance optimization:** Redis reduces database queries, improving response times.  
+- **Asynchronous processing:** Celery handles background tasks, avoiding backend blockages.  
+- **Ease of deployment and maintenance:** Docker Compose simplifies configuration, allows quick environment replication, and avoids compatibility conflicts.  
+- **High availability:** It can be integrated with orchestrators like Kubernetes to improve redundancy and fault tolerance.
 
-La solución se pensó más a nivel de infraestructura, pensando en un mecanismo de caché y de tareas asíncronas para no generar cuellos de botella, tanto en backend como en la instancia de base de datos, no tanto así en el desarrollo de las clases y el modelado de datos por una cuestión de tiempos y velocidad de desarrollo.
-La idea fue mostrar un poco de todos los aspectos en los cuales tengo experiencia y capacidad de pensar soluciones.
+The solution was designed more at the infrastructure level, focusing on a caching mechanism and asynchronous tasks to avoid bottlenecks in both the backend and the database instance, rather than on class development and data modeling due to time constraints and development speed.  
+The idea was to showcase a bit of all the aspects in which I have experience and the ability to think of solutions.
 
-Mejoras localizadas para realizar en próximas versiones:
-- Swagger para documentaciones de APIs
-- Mejoras en los modelos de datos y relaciones
-- Mejoras generales y personalizadas en administración de caché
-- Administraciones de permisos y privilegios de usuarios
-- Optimización de Endpoints para retornar solo información necesaria
-- Reemplazar operaciones bucles "for" por iteradores o chunk para evitar tener en memoria grandes volumenes de datos
-- Refactorizar código para tener métodos y funciones más atómicas (principios SOLID)
-- Mejorar la tarea de "send_promo_notifications" que quedó con dependencias y con tareas que se podrían desacoplar para mejor funcionamiento y velocidad
-- Mejoras y expansión de tests
+## Localized Improvements for Future Versions:
+- Swagger for API documentation  
+- Improvements in data models and relationships  
+- General and customized improvements in cache management  
+- User permissions and privileges management  
+- Endpoint optimization to return only necessary information  
+- Replace "for" loop operations with iterators or chunks to avoid holding large volumes of data in memory  
+- Refactor code to have more atomic methods and functions (SOLID principles)  
+- Improve the "send_promo_notifications" task, which has dependencies and tasks that could be decoupled for better performance and speed  
+- Improvements and expansion of tests  
 
+## Prerequisites
+- Create and add environment variables in a `.env` file at the same level as the `docker-compose.yaml` file  
+- Have Docker installed  
+- Have an internet connection  
 
-## Pre-requisitos
-- Crear y agregar variables de entorno en un archivo .env a la altura del "docker-compose.yaml"
-- Tener instalado Docker
-- Poseer conexion a internet
+## Starting the App
+To start the app, open a console at the level of the `docker-compose.yaml` file and execute the following commands:  
+- `docker compose up -d`  
+- `docker compose exec web python ./flash_promo/manage.py populate_demo_data`  
 
-## Inicio de la app
-Para levantar la app se requiere abrir una consola a la altura del archivo "docker-compose.yaml" y ejecutar los siguientes comandos
-- docker compose up -d
-- docker compose exec web python ./flash_promo/manage.py populate_demo_data
+### App Flow
+The premise of the solution is as follows:  
+When a FlashPromotion is created, users within the segment and distance radius according to the store related to that promotion are notified. (This is triggered asynchronously if the promotion is for the same day and is ongoing, or the execution is scheduled for the promotion's start date).  
+Once notified, users can reserve the promotion. When a reservation is made, it is locked for that user, and another user within the segment and distance cannot reserve it unless more than 1 minute passes and the first user's reservation expires.  
+If within the reservation time range, the user completes the reservation, the promotion is deactivated for all users.
 
-### Flujo de la app
-La premisa de la solucion es la siguiente:  
-Cuando se da de alta una FlashPromotion se avisa a los usuarios dentro del segmento y radio de distancia segun la tienda que tenga relacion con esa promocion. (esto se dispara de manera asincrona si la promocion es del mismo dia y esta en curso o se programa la ejecucion para la fecha de inicio de la promocion).  
-Una vez notificados los mismos pueden hacer una reserva de dicha promocion, al hacerla la misma queda bloqueada para ese usuario y otro usuario que este dentro del segmento y distancia no podra reservarla, a menos que pase mas de 1 minuto y se caiga la reserva del primer usuario.  
-Si dentro del rango de tiempo de reserva, el usuario completa la misma, la promocion se desactiva para todos lo usuarios.
-
-## Servicios
-La propuesta cuenta con un listado de endpoints con las siguientes finalidades  
-- Django admin estara disponible en http://localhost:8000/admin y se podra logear con las credenciales declaradas en el .env
+## Services
+The proposal includes a list of endpoints with the following purposes:  
+- Django admin will be available at `http://localhost:8000/admin` and can be logged in with the credentials declared in the `.env` file.  
 
 ### Stores CRUD
-Permite realizar CRUD de tiendas  
-http://localhost:8000/api/market/stores/
+Allows CRUD operations for stores  
+`http://localhost:8000/api/market/stores/`
 
 ### Products CRUD
-Permite realizar CRUD para productos  
-http://localhost:8000/api/market/products/
+Allows CRUD operations for products  
+`http://localhost:8000/api/market/products/`
 
 ### Promotions
-  - FlashPromo CRUD  
-    Permite realizar CRUD de las promociones flash  
-    http://localhost:8000/api/promotions/flash-promos/ 
+  - **FlashPromo CRUD**  
+    Allows CRUD operations for flash promotions  
+    `http://localhost:8000/api/promotions/flash-promos/`  
 
-    - FlashPromo Elegible (GET / returns the current available promotions of the querying user)  
-      Permite obtener el listado de promociones para las cuales un usuario cumple con los requisitos de distancia, segmento y estan corriendo en ese momento  
-      http://localhost:8000/api/promotions/flash-promos/eligible/
+    - **FlashPromo Eligible (GET / returns the current available promotions of the querying user)**  
+      Allows retrieving the list of promotions for which a user meets the distance and segment requirements and are currently running  
+      `http://localhost:8000/api/promotions/flash-promos/eligible/`  
 
-    - FlashPromo Running (GET / returns the list of running promotions of the querying user)  
-      Retorna todas las promociones que estan corriendo en ese momento  
-      http://localhost:8000/api/promotions/flash-promos/running/
+    - **FlashPromo Running (GET / returns the list of running promotions of the querying user)**  
+      Returns all promotions currently running  
+      `http://localhost:8000/api/promotions/flash-promos/running/`  
 
-  - PromoReservation (POST / Reserve a promotion for 1 minute for the querying user sending the promotion_id)  
-    Permite hacer una reserva de una promocion  
-    http://localhost:8000/api/promotions/promo-reservations/
-  
-  - PromoReservation/Complete (POST / complete a purchase for the querying user sending the promotion_id)  
-    Permite completar la reserva de una promocion  
-    http://localhost:8000/api/promotions/promo-reservations/{pk}/complete/
+  - **PromoReservation (POST / Reserve a promotion for 1 minute for the querying user sending the promotion_id)**  
+    Allows reserving a promotion  
+    `http://localhost:8000/api/promotions/promo-reservations/`  
+
+  - **PromoReservation/Complete (POST / complete a purchase for the querying user sending the promotion_id)**  
+    Allows completing a promotion reservation  
+    `http://localhost:8000/api/promotions/promo-reservations/{pk}/complete/`  
 
 ### Users
-  - UserSegments (CRUD)  
-  Permite realizar CRUD de segmentos de clientes  
-  http://localhost:8000/api/users/user-segments/
-  
-  - ClientProfiles (GET)  
-  Permite realizar CRUD de clientes  
-  http://localhost:8000/api/users/clients-profiles/
+  - **UserSegments (CRUD)**  
+    Allows CRUD operations for client segments  
+    `http://localhost:8000/api/users/user-segments/`  
 
+  - **ClientProfiles (GET)**  
+    Allows CRUD operations for clients  
+    `http://localhost:8000/api/users/clients-profiles/`  
 
 ## Tests
-Se crearon algunos unittest para algunas apps para probar funcionalidades y endopoints. Para ello hay que ejecutar el siguiente comando y pasar como parametro la app a testear  
-Apps con test: utils, market  
-docker compose exec web python ./flash_promo/manage.py test NOMBRE_DE_LA_APP
+Some unittests were created for some apps to test functionalities and endpoints. To run them, execute the following command and pass the app name as a parameter:  
+Apps with tests: `utils`, `market`  
+`docker compose exec web python ./flash_promo/manage.py test APP_NAME`
